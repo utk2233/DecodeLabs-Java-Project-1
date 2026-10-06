@@ -3,97 +3,247 @@ import java.util.Random;
 import java.util.Scanner;
 
 /**
- * DecodeLabs Java Programming - Project 1: Number Guessing Game
+ * DecodeLabs Java Programming - Project 1
+ * Enhanced Number Guessing Game
+ *
  * Features:
+ * - Difficulty levels
  * - Random number generation
- * - Loops and conditionals
- * - Input validation using try-catch
- * - Attempt limiter
- * - Score tracking
+ * - Input validation
+ * - Limited attempts
+ * - High/Low hints
+ * - Score system
+ * - Best score tracking
  * - Multiple rounds
+ * - Game statistics
  */
-public class DecodeLabs_Java_P1 {
+
+public class NumberGame {
 
     private static final int MIN = 1;
     private static final int MAX = 100;
-    private static final int MAX_ATTEMPTS = 7;
 
     public static void main(String[] args) {
 
-        Scanner scanner = new Scanner(System.in);
+        Scanner sc = new Scanner(System.in);
         Random random = new Random();
 
         int totalScore = 0;
-        char playAgain;
+        int bestScore = 0;
+        int roundsPlayed = 0;
+        int roundsWon = 0;
 
-        System.out.println("=================================");
-        System.out.println("   DECODELABS NUMBER GUESSING GAME");
-        System.out.println("=================================");
+        System.out.println("======================================");
+        System.out.println("       NUMBER GUESSING GAME");
+        System.out.println("       DecodeLabs Java Project 1");
+        System.out.println("======================================");
+
+        String playAgain;
 
         do {
-            int secretNumber = random.nextInt(MAX - MIN + 1) + MIN;
+
+            // Difficulty selection
+            int maxAttempts = chooseDifficulty(sc);
+
+            // Generate random number
+            int target = random.nextInt(MAX - MIN + 1) + MIN;
+
             int attempts = 0;
-            boolean guessedCorrectly = false;
+            boolean won = false;
 
-            System.out.println("\nI have selected a number between "
+            roundsPlayed++;
+
+            System.out.println("\n--------------------------------------");
+            System.out.println("Round " + roundsPlayed);
+            System.out.println("I'm thinking of a number between "
                     + MIN + " and " + MAX + ".");
-            System.out.println("You have " + MAX_ATTEMPTS + " attempts.");
+            System.out.println("You have " + maxAttempts + " attempts.");
+            System.out.println("--------------------------------------");
 
-            while (attempts < MAX_ATTEMPTS && !guessedCorrectly) {
+            // Guessing loop
+            while (!won && attempts < maxAttempts) {
 
-                System.out.print("\nEnter your guess: ");
+                System.out.print(
+                        "\nAttempt " + (attempts + 1)
+                                + "/" + maxAttempts
+                                + " - Enter your guess: ");
+
+                int guess;
 
                 try {
-                    int guess = scanner.nextInt();
-                    attempts++;
-
-                    if (guess < MIN || guess > MAX) {
-                        System.out.println("Please enter a number between "
-                                + MIN + " and " + MAX + ".");
-                        continue;
-                    }
-
-                    if (guess == secretNumber) {
-                        guessedCorrectly = true;
-
-                        int score = (MAX_ATTEMPTS - attempts + 1) * 10;
-                        totalScore += score;
-
-                        System.out.println("Correct! 🎉");
-                        System.out.println("You guessed the number in "
-                                + attempts + " attempt(s).");
-                        System.out.println("Round Score: " + score);
-                    } 
-                    else if (guess < secretNumber) {
-                        System.out.println("Too low! Try a higher number.");
-                    } 
-                    else {
-                        System.out.println("Too high! Try a lower number.");
-                    }
-
+                    guess = sc.nextInt();
                 } catch (InputMismatchException e) {
-                    System.out.println("Invalid input! Please enter a number.");
-                    scanner.nextLine();
+
+                    System.out.println(
+                            "Invalid input! Please enter a whole number.");
+
+                    sc.next();
+                    continue;
+                }
+
+                // Range validation
+                if (guess < MIN || guess > MAX) {
+                    System.out.println(
+                            "Out of range! Enter a number between "
+                                    + MIN + " and " + MAX + ".");
+                    continue;
+                }
+
+                attempts++;
+
+                // Correct guess
+                if (guess == target) {
+
+                    won = true;
+                    roundsWon++;
+
+                    int points = calculateScore(
+                            maxAttempts, attempts);
+
+                    totalScore += points;
+
+                    if (points > bestScore) {
+                        bestScore = points;
+                    }
+
+                    System.out.println("\n🎉 Correct!");
+                    System.out.println(
+                            "You guessed the number in "
+                                    + attempts + " attempt(s).");
+                    System.out.println(
+                            "You earned " + points + " points.");
+
+                } else if (guess > target) {
+
+                    System.out.println("Too High! Try a smaller number.");
+
+                } else {
+
+                    System.out.println("Too Low! Try a bigger number.");
+                }
+
+                // Hint after 2 attempts
+                if (!won && attempts == 2) {
+
+                    if (target % 2 == 0) {
+                        System.out.println(
+                                "Hint: The number is EVEN.");
+                    } else {
+                        System.out.println(
+                                "Hint: The number is ODD.");
+                    }
                 }
             }
 
-            if (!guessedCorrectly) {
-                System.out.println("\nGame Over!");
-                System.out.println("The correct number was: " + secretNumber);
+            // Player loses
+            if (!won) {
+
+                System.out.println("\n❌ Out of attempts!");
+                System.out.println(
+                        "The correct number was: " + target);
             }
 
-            System.out.println("Total Score: " + totalScore);
+            System.out.println("\nCurrent Score: " + totalScore);
 
-            System.out.print("\nDo you want to play another round? (Y/N): ");
-            playAgain = scanner.next().charAt(0);
+            // Play again
+            while (true) {
 
-        } while (playAgain == 'Y' || playAgain == 'y');
+                System.out.print("\nPlay again? [Y/N]: ");
 
-        System.out.println("\n=================================");
-        System.out.println("Thank you for playing!");
-        System.out.println("Final Score: " + totalScore);
-        System.out.println("=================================");
+                playAgain = sc.next();
 
-        scanner.close();
+                if (playAgain.equalsIgnoreCase("Y")
+                        || playAgain.equalsIgnoreCase("N")) {
+                    break;
+                }
+
+                System.out.println(
+                        "Please enter only Y or N.");
+            }
+
+        } while (playAgain.equalsIgnoreCase("Y"));
+
+        // Final statistics
+        System.out.println("\n======================================");
+        System.out.println("            GAME OVER");
+        System.out.println("======================================");
+
+        System.out.println("Rounds Played : " + roundsPlayed);
+        System.out.println("Rounds Won    : " + roundsWon);
+        System.out.println("Rounds Lost   : "
+                + (roundsPlayed - roundsWon));
+        System.out.println("Total Score   : " + totalScore);
+        System.out.println("Best Score    : " + bestScore);
+
+        if (roundsPlayed > 0) {
+
+            double winRate =
+                    (roundsWon * 100.0) / roundsPlayed;
+
+            System.out.printf(
+                    "Win Rate      : %.1f%%%n", winRate);
+        }
+
+        System.out.println("--------------------------------------");
+        System.out.println("Thanks for playing!");
+        System.out.println("Developed for DecodeLabs Internship");
+        System.out.println("======================================");
+
+        sc.close();
+    }
+
+    // Difficulty selection
+    private static int chooseDifficulty(Scanner sc) {
+
+        while (true) {
+
+            System.out.println("\nSelect Difficulty:");
+            System.out.println("1. Easy   - 10 Attempts");
+            System.out.println("2. Medium - 7 Attempts");
+            System.out.println("3. Hard   - 5 Attempts");
+
+            System.out.print("Enter your choice: ");
+
+            try {
+
+                int choice = sc.nextInt();
+
+                switch (choice) {
+
+                    case 1:
+                        System.out.println(
+                                "Easy Mode Selected!");
+                        return 10;
+
+                    case 2:
+                        System.out.println(
+                                "Medium Mode Selected!");
+                        return 7;
+
+                    case 3:
+                        System.out.println(
+                                "Hard Mode Selected!");
+                        return 5;
+
+                    default:
+                        System.out.println(
+                                "Please select 1, 2 or 3.");
+                }
+
+            } catch (InputMismatchException e) {
+
+                System.out.println(
+                        "Invalid input! Enter 1, 2 or 3.");
+
+                sc.next();
+            }
+        }
+    }
+
+    // Score calculation
+    private static int calculateScore(
+            int maxAttempts, int attempts) {
+
+        return (maxAttempts - attempts + 1) * 10;
     }
 }
